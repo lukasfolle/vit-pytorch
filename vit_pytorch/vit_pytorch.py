@@ -93,15 +93,17 @@ class Transformer(nn.Module):
 
 
 class ViT(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, channels=3, dropout=0.,
-                 emb_dropout=0.):
+    def __init__(self, *, image_size, image_depth, patch_size, patch_depth, num_classes, dim, depth, heads, mlp_dim,
+                 channels=1, dropout=0., emb_dropout=0.):
         super().__init__()
         assert image_size % patch_size == 0, 'image dimensions must be divisible by the patch size'
-        num_patches = (image_size // patch_size) ** 3
-        patch_dim = channels * patch_size ** 3
+        assert image_depth % patch_depth == 0, 'image depth must be divisible by the patch depth'
+        num_patches = (image_size // patch_size) ** 2 * (image_depth // patch_depth)
+        patch_dim = channels * patch_size ** 2 * patch_depth
         assert num_patches > MIN_NUM_PATCHES, f'your number of patches ({num_patches}) is way too small for attention to be effective. try decreasing your patch size'
 
         self.patch_size = patch_size
+        self.patch_depth = patch_depth
 
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
         self.patch_to_embedding = nn.Linear(patch_dim, dim)
@@ -122,8 +124,9 @@ class ViT(nn.Module):
 
     def forward(self, img, mask=None):
         p = self.patch_size
+        p_d = self.patch_depth
 
-        x = rearrange(img, 'b c (h p1) (w p2) (d p3) -> b (h w d) (p1 p2 p3 c)', p1=p, p2=p, p3=p)
+        x = rearrange(img, 'b c (h p1) (w p2) (d p3) -> b (h w d) (p1 p2 p3 c)', p1=p, p2=p, p3=p_d)
         x = self.patch_to_embedding(x)
         b, n, _ = x.shape
 

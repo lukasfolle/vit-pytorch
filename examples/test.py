@@ -3,7 +3,9 @@ from vit_pytorch import ViT
 
 v = ViT(
     image_size=256,
+    image_depth=256,
     patch_size=32,
+    patch_depth=32,
     num_classes=1000,
     dim=1024,
     depth=6,
@@ -13,7 +15,7 @@ v = ViT(
     emb_dropout=0.1
 )
 
-img = torch.randn(1, 3, 256, 256, 256)
+img = torch.randn(1, 1, 256, 256, 256)
 mask = torch.ones(1, 8, 8, 8).bool()  # optional mask, designating which patch to attend to
 
 print(img.shape)
